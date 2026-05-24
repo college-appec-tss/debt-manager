@@ -12,14 +12,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* Serve frontend files */
-app.use(express.static(path.join(__dirname, "public")));
+/* -------------------------
+   Serve static files
+--------------------------*/
+app.use(express.static(__dirname));
 
-/* Homepage route */
+/* Homepage */
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
+/* Login page */
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "login_form.html"));
+});
+
+/* -------------------------
+   Twilio Setup
+--------------------------*/
 const client = twilio(
   process.env.TWILIO_SID,
   process.env.TWILIO_AUTH
@@ -58,6 +68,7 @@ async function sendSMS(phone, message) {
 
 /* -------------------------
    AUTO OVERDUE CHECKER
+   runs every minute
 --------------------------*/
 cron.schedule("* * * * *", () => {
   console.log("Checking overdue records...");
@@ -73,7 +84,8 @@ cron.schedule("* * * * *", () => {
       record.dueDate < today &&
       !record.smsSent
     ) {
-      const msg = `Hello ${record.name}, you have an overdue payment of ${record.amount}. Please pay as soon as possible.`;
+      const msg =
+        `Hello ${record.name}, you have an overdue payment of ${record.amount}. Please pay as soon as possible.`;
 
       sendSMS(record.phone, msg);
 
@@ -85,10 +97,13 @@ cron.schedule("* * * * *", () => {
 
   if (updated) {
     saveData(data);
+    console.log("Records updated");
   }
 });
 
-/* API routes */
+/* -------------------------
+   ADD RECORD API
+--------------------------*/
 app.post("/add-record", (req, res) => {
   let data = loadData();
   data.push(req.body);
@@ -96,11 +111,16 @@ app.post("/add-record", (req, res) => {
   res.send("Record added");
 });
 
+/* -------------------------
+   GET RECORDS API
+--------------------------*/
 app.get("/records", (req, res) => {
   res.json(loadData());
 });
 
-/* Start server */
+/* -------------------------
+   START SERVER
+--------------------------*/
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, "0.0.0.0", () => {
