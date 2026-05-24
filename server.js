@@ -5,10 +5,20 @@ const cors = require("cors");
 const twilio = require("twilio");
 const cron = require("node-cron");
 const fs = require("fs");
+const path = require("path");
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
+
+/* Serve frontend files */
+app.use(express.static(path.join(__dirname, "public")));
+
+/* Homepage route */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 const client = twilio(
   process.env.TWILIO_SID,
@@ -48,7 +58,6 @@ async function sendSMS(phone, message) {
 
 /* -------------------------
    AUTO OVERDUE CHECKER
-   Runs every 1 minute
 --------------------------*/
 cron.schedule("* * * * *", () => {
   console.log("Checking overdue records...");
@@ -76,13 +85,10 @@ cron.schedule("* * * * *", () => {
 
   if (updated) {
     saveData(data);
-    console.log("Records updated with overdue SMS ready to be sent");
   }
 });
 
-/* -------------------------
-   ADD RECORD API
---------------------------*/
+/* API routes */
 app.post("/add-record", (req, res) => {
   let data = loadData();
   data.push(req.body);
@@ -90,16 +96,13 @@ app.post("/add-record", (req, res) => {
   res.send("Record added");
 });
 
-/* -------------------------
-   GET RECORDS API
---------------------------*/
 app.get("/records", (req, res) => {
   res.json(loadData());
 });
 
-/* -------------------------
-   START SERVER
---------------------------*/
-app.listen(process.env.PORT || 3000, () => {
-  console.log("🚀 Server running...");
+/* Start server */
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
