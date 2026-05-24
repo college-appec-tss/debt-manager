@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000";
+const API_URL = window.location.origin;
 
 /* -----------------------------
    INIT
@@ -31,7 +31,8 @@ function toggleDarkMode() {
    SMS FUNCTION
 ------------------------------*/
 function sendSMS(phone, name, amount) {
-  const message = `Hello ${name}, you have new account notification ${amount}. check details for your account `;
+  const message =
+    `Hello ${name}, you have new account notification ${amount}. Check your account details.`;
 
   fetch(`${API_URL}/send-sms`, {
     method: "POST",
@@ -54,7 +55,7 @@ function addRecord() {
   const amount = parseFloat(document.getElementById("amount").value);
   const dueDate = document.getElementById("dueDate").value;
 
-  if (!name || !amount || !dueDate) {
+  if (!name || !phone || !amount || !dueDate) {
     alert("Please fill all fields");
     return;
   }
@@ -87,7 +88,10 @@ function addRecord() {
 
       loadRecords();
     })
-    .catch(err => console.error("Add error:", err));
+    .catch(err => {
+      console.error("Add error:", err);
+      alert("Failed to save record");
+    });
 }
 
 /* -----------------------------
@@ -106,11 +110,9 @@ function loadRecords() {
       let overdue = 0;
 
       data.forEach(rec => {
-        // OVERDUE CHECK
         if (rec.dueDate < today && rec.status !== "Paid") {
           rec.status = "Overdue";
 
-          // SEND SMS ONLY ONCE
           if (!rec.smsSent) {
             sendSMS(rec.phone, rec.name, rec.amount);
             rec.smsSent = true;
@@ -118,7 +120,9 @@ function loadRecords() {
         }
 
         if (rec.date === today) daily += Number(rec.amount);
-        if (rec.date?.slice(0, 7) === today.slice(0, 7)) monthly += Number(rec.amount);
+        if (rec.date?.slice(0, 7) === today.slice(0, 7)) {
+          monthly += Number(rec.amount);
+        }
         if (rec.status === "Overdue") overdue++;
 
         table.innerHTML += `
