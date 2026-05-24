@@ -1,18 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>login</title>
+  <title>Login</title>
 </head>
 <body>
-    <center>
-        <div id="container">
-        <form action="post">
-            <input type="text" placeholder="enter username"><br>
-            <input type="password" placeholder="enter your password">
-        </form>
-        </div>
-    </center>
+
+<h2>Register</h2>
+<input id="ruser" placeholder="username">
+<input id="rpass" type="password" placeholder="password">
+<button onclick="register()">Register</button>
+
+<h2>Login</h2>
+<input id="luser" placeholder="username">
+<input id="lpass" type="password" placeholder="password">
+<button onclick="login()">Login</button>
+
+<script>
+const API = window.location.origin;
+
+function register() {
+  fetch(API + "/register", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      username: ruser.value,
+      password: rpass.value
+    })
+  })
+  .then(r => r.text())
+  .then(alert);
+}
+
+function login() {
+  fetch(API + "/login", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      username: luser.value,
+      password: lpass.value
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    localStorage.setItem("token", d.token);
+    location.href = "/";
+  });
+}
+</script>
+
 </body>
 </html>
