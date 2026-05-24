@@ -1,52 +1,80 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Login</title>
-</head>
-<body>
+const API_URL = window.location.origin;
 
-<h2>Register</h2>
-<input id="ruser" placeholder="username">
-<input id="rpass" type="password" placeholder="password">
-<button onclick="register()">Register</button>
+/* init */
+document.addEventListener("DOMContentLoaded", () => {
+  const token = localStorage.getItem("token");
 
-<h2>Login</h2>
-<input id="luser" placeholder="username">
-<input id="lpass" type="password" placeholder="password">
-<button onclick="login()">Login</button>
+  if (!token) {
+    location.href = "/login";
+    return;
+  }
 
-<script>
-const API = window.location.origin;
+  document.getElementById("saveBtn")
+    .addEventListener("click", addRecord);
 
-function register() {
-  fetch(API + "/register", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
+  loadRecords();
+});
+
+/* add record */
+function addRecord() {
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const amount = parseFloat(document.getElementById("amount").value);
+  const dueDate = document.getElementById("dueDate").value;
+
+  if (!name || !phone || !amount || !dueDate) {
+    alert("Fill all fields");
+    return;
+  }
+
+  fetch(`${API_URL}/add-record`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    },
     body: JSON.stringify({
-      username: ruser.value,
-      password: rpass.value
+      name,
+      phone,
+      amount,
+      dueDate,
+      status: "Not Paid",
+      smsSent: false,
+      date: new Date().toISOString().split("T")[0]
     })
   })
   .then(r => r.text())
-  .then(alert);
+  .then(alert)
+  .then(loadRecords);
 }
 
-function login() {
-  fetch(API + "/login", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({
-      username: luser.value,
-      password: lpass.value
-    })
+/* load records */
+function loadRecords() {
+  fetch(`${API_URL}/records`, {
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
   })
   .then(r => r.json())
-  .then(d => {
-    localStorage.setItem("token", d.token);
-    location.href = "/";
+  .then(data => {
+    const table = document.getElementById("table");
+    table.innerHTML = "";
+
+    data.forEach(rec => {
+      table.innerHTML += `
+        <tr>
+          <td>${rec.name}</td>
+          <td>${rec.amount}</td>
+          <td>${rec.dueDate}</td>
+          <td>${rec.status}</td>
+        </tr>
+      `;
+    });
   });
 }
-</script>
 
-</body>
-</html>
+/* logout */
+function logout() {
+  localStorage.removeItem("token");
+  location.href = "/login";
+}
