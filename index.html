@@ -1,44 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Shop Manager PRO</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Debt Manager</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, button { margin: 5px; padding: 8px; }
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 8px;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="container">
-  <h1>💼 Shop Manager</h1>
-  <button onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+<h1>Debt Manager</h1>
 
-  <h3>Add Record</h3>
-  <input id="name" placeholder="Customer Name">
-  <input id="phone" placeholder="Phone Number">
-  <input id="amount" type="number" placeholder="Amount">
-  <input id="dueDate" type="date">
+<button onclick="logout()">Logout</button>
 
-  <button id="saveBtn">Save Record</button>
+<h2>Add Record</h2>
 
-  <h3>Summary</h3>
-  <p>Today: <span id="daily">0</span></p>
-  <p>Month: <span id="monthly">0</span></p>
-  <p>Overdue: <span id="overdue">0</span></p>
+<input id="name" placeholder="Customer name">
+<input id="phone" placeholder="Phone number">
+<input id="amount" type="number" placeholder="Amount">
+<input id="dueDate" type="date">
 
-  <h3>Records</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Amount</th>
-        <th>Due</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="table"></tbody>
-  </table>
-</div>
+<button id="saveBtn">Add Record</button>
+
+<h2>My Records</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Amount</th>
+      <th>Due Date</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="table"></tbody>
+</table>
 
 <script src="script.js"></script>
+
 </body>
 </html>
