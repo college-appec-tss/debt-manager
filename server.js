@@ -114,27 +114,12 @@ app.get("/records", auth, (req, res) => {
   );
 });
 
-const PORT = process.env.PORT || 10000;
-
-app.listen(PORT, () =>
-  console.log("running")
-);
-/* get records */
-app.get("/records", auth, (req, res) => {
-  const records = read(RECORDS);
-
-  res.json(
-    records.filter(
-      r => r.owner === req.user.username
-    )
-  );
-});
-
-/* DEBUG ROUTES */
+/* debug users */
 app.get("/debug-users", (req, res) => {
   res.json(read(USERS));
 });
 
+/* debug records */
 app.get("/debug-records", (req, res) => {
   res.json(read(RECORDS));
 });
