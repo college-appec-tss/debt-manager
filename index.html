@@ -1,41 +1,22 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Debt Manager</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    input, button { margin: 5px; padding: 8px; }
-    table, th, td {
-      border: 1px solid black;
-      border-collapse: collapse;
-      padding: 8px;
-    }
-  </style>
-</head>
 <body>
 
 <h1>Debt Manager</h1>
 
 <button onclick="logout()">Logout</button>
-
-<h2>Add Record</h2>
+<br><br>
 
 <input id="name" placeholder="Customer name">
-<input id="phone" placeholder="Phone number">
-<input id="amount" type="number" placeholder="Amount">
-<input id="dueDate" type="date">
-
+<input id="amount" placeholder="Amount">
 <button id="saveBtn">Add Record</button>
 
 <h2>My Records</h2>
-
-<table>
+<table border="1">
   <thead>
     <tr>
       <th>Name</th>
       <th>Amount</th>
-      <th>Due Date</th>
-      <th>Status</th>
     </tr>
   </thead>
   <tbody id="table"></tbody>
