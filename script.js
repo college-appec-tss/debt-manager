@@ -1,143 +1,109 @@
 const API_URL = window.location.origin;
 
-/* -----------------------------
-   INIT
-------------------------------*/
+/* INIT */
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("saveBtn").addEventListener("click", addRecord);
+  const token = localStorage.getItem("token");
 
-  loadRecords();
-
-  // Load dark mode preference
-  const theme = localStorage.getItem("theme");
-  if (theme === "dark") {
-    document.body.classList.add("dark");
-  }
-});
-
-/* -----------------------------
-   DARK MODE
-------------------------------*/
-function toggleDarkMode() {
-  document.body.classList.toggle("dark");
-
-  localStorage.setItem(
-    "theme",
-    document.body.classList.contains("dark") ? "dark" : "light"
-  );
-}
-
-/* -----------------------------
-   SMS FUNCTION
-------------------------------*/
-function sendSMS(phone, name, amount) {
-  const message =
-    `Hello ${name}, you have new account notification ${amount}. Check your account details.`;
-
-  fetch(`${API_URL}/send-sms`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ phone, message })
-  })
-    .then(res => res.text())
-    .then(res => console.log("SMS:", res))
-    .catch(err => console.error("SMS error:", err));
-}
-
-/* -----------------------------
-   ADD RECORD
-------------------------------*/
-function addRecord() {
-  const name = document.getElementById("name").value;
-  const phone = document.getElementById("phone").value;
-  const amount = parseFloat(document.getElementById("amount").value);
-  const dueDate = document.getElementById("dueDate").value;
-
-  if (!name || !phone || !amount || !dueDate) {
-    alert("Please fill all fields");
+  if (!token) {
+    location.href = "/login";
     return;
   }
 
-  const record = {
-    name,
-    phone,
-    amount,
-    dueDate,
-    status: "Not Paid",
-    smsSent: false,
-    date: new Date().toISOString().split("T")[0]
-  };
+  document.getElementById("saveBtn").addEventListener("click", addRecord);
+
+  loadRecords();
+});
+
+/* ADD RECORD */
+function addRecord() {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const amount = document.getElementById("amount").value;
+  const dueDate = document.getElementById("dueDate").value;
+
+  if (!name || !phone || !amount || !dueDate) {
+    alert("Fill all fields");
+    return;
+  }
 
   fetch(`${API_URL}/add-record`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
     },
-    body: JSON.stringify(record)
-  })
-    .then(res => res.text())
-    .then(() => {
-      alert("Record saved successfully");
-
-      document.getElementById("name").value = "";
-      document.getElementById("phone").value = "";
-      document.getElementById("amount").value = "";
-      document.getElementById("dueDate").value = "";
-
-      loadRecords();
+    body: JSON.stringify({
+      name,
+      phone,
+      amount,
+      dueDate,
+      status: "Not Paid",
+      smsSent: false,
+      date: new Date().toISOString().split("T")[0]
     })
-    .catch(err => {
-      console.error("Add error:", err);
-      alert("Failed to save record");
-    });
+  })
+  .then(async r => {
+    const text = await r.text();
+
+    if (!r.ok) {
+      alert(text);
+
+      if (r.status === 401 || r.status === 403) {
+        localStorage.removeItem("token");
+        location.href = "/login";
+      }
+      return;
+    }
+
+    alert(text);
+
+    document.getElementById("name").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("amount").value = "";
+    document.getElementById("dueDate").value = "";
+
+    loadRecords();
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Error saving record");
+  });
 }
 
-/* -----------------------------
-   LOAD + DISPLAY RECORDS
-------------------------------*/
+/* LOAD RECORDS */
 function loadRecords() {
-  fetch(`${API_URL}/records`)
-    .then(res => res.json())
-    .then(data => {
-      const table = document.getElementById("table");
-      table.innerHTML = "";
+  fetch(`${API_URL}/records`, {
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  })
+  .then(async r => {
+    if (!r.ok) {
+      localStorage.removeItem("token");
+      location.href = "/login";
+      return [];
+    }
+    return r.json();
+  })
+  .then(data => {
+    const table = document.getElementById("table");
+    table.innerHTML = "";
 
-      let today = new Date().toISOString().split("T")[0];
-      let daily = 0;
-      let monthly = 0;
-      let overdue = 0;
+    data.forEach(rec => {
+      table.innerHTML += `
+        <tr>
+          <td>${rec.name}</td>
+          <td>${rec.amount}</td>
+          <td>${rec.dueDate}</td>
+          <td>${rec.status}</td>
+        </tr>
+      `;
+    });
+  });
+}
 
-      data.forEach(rec => {
-        if (rec.dueDate < today && rec.status !== "Paid") {
-          rec.status = "Overdue";
-
-          if (!rec.smsSent) {
-            sendSMS(rec.phone, rec.name, rec.amount);
-            rec.smsSent = true;
-          }
-        }
-
-        if (rec.date === today) daily += Number(rec.amount);
-        if (rec.date?.slice(0, 7) === today.slice(0, 7)) {
-          monthly += Number(rec.amount);
-        }
-        if (rec.status === "Overdue") overdue++;
-
-        table.innerHTML += `
-          <tr>
-            <td>${rec.name}</td>
-            <td>${rec.amount}</td>
-            <td>${rec.dueDate}</td>
-            <td>${rec.status || "Not Paid"}</td>
-          </tr>
-        `;
-      });
-
-      document.getElementById("daily").innerText = daily;
-      document.getElementById("monthly").innerText = monthly;
-      document.getElementById("overdue").innerText = overdue;
-    })
-    .catch(err => console.error("Load error:", err));
+/* LOGOUT */
+function logout() {
+  localStorage.removeItem("token");
+  location.href = "/login";
 }
