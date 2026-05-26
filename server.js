@@ -93,9 +93,13 @@ app.post("/login", async (req, res) => {
 app.post("/add-record", auth, (req, res) => {
   let records = read(RECORDS);
 
-  records.push({
-    ...req.body,
-    owner: req.user.username
+ records.push({
+  ...req.body,
+  dueDate: req.body.dueDate,
+  phone: req.body.phone,
+  reminded: false,
+  owner: req.user.username
+});
   });
 
   write(RECORDS, records);
