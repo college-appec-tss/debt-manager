@@ -1,14 +1,10 @@
-const twilio = require("twilio");
-
-const client = twilio(
-  process.env.TWILIO_SID,
-  process.env.TWILIO_AUTH
-);
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const cron = require("node-cron");
+const twilio = require("twilio");
 
 const app = express();
 
@@ -18,6 +14,11 @@ app.use(express.static(__dirname));
 const JWT_SECRET = "mysecret123";
 const USERS = "users.json";
 const RECORDS = "records.json";
+
+const client = twilio(
+  process.env.TWILIO_SID,
+  process.env.TWILIO_AUTH
+);
 
 /* helpers */
 function read(file) {
@@ -29,7 +30,7 @@ function write(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-/* auth middleware */
+/* auth */
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
 
@@ -64,10 +65,7 @@ app.post("/register", async (req, res) => {
 
   const hash = await bcrypt.hash(password, 10);
 
-  users.push({
-    username,
-    password: hash
-  });
+  users.push({ username, password: hash });
 
   write(USERS, users);
 
@@ -87,10 +85,7 @@ app.post("/login", async (req, res) => {
 
   if (!ok) return res.send("Wrong password");
 
-  const token = jwt.sign(
-    { username },
-    JWT_SECRET
-  );
+  const token = jwt.sign({ username }, JWT_SECRET);
 
   res.json({ token });
 });
@@ -99,13 +94,12 @@ app.post("/login", async (req, res) => {
 app.post("/add-record", auth, (req, res) => {
   let records = read(RECORDS);
 
- records.push({
-  ...req.body,
-  dueDate: req.body.dueDate,
-  phone: req.body.phone,
-  reminded: false,
-  owner: req.user.username
-});
+  records.push({
+    ...req.body,
+    dueDate: req.body.dueDate,
+    phone: req.body.phone,
+    reminded: false,
+    owner: req.user.username
   });
 
   write(RECORDS, records);
@@ -118,28 +112,20 @@ app.get("/records", auth, (req, res) => {
   const records = read(RECORDS);
 
   res.json(
-    records.filter(
-      r => r.owner === req.user.username
-    )
+    records.filter(r => r.owner === req.user.username)
   );
 });
 
-/* debug users */
+/* debug */
 app.get("/debug-users", (req, res) => {
   res.json(read(USERS));
 });
 
-/* debug records */
 app.get("/debug-records", (req, res) => {
   res.json(read(RECORDS));
 });
 
-const PORT = process.env.PORT || 10000;
-
-app.listen(PORT, () =>
-  console.log("running")
-);
-const cron = require("node-cron");
+/* SMS daily checker */
 cron.schedule("0 8 * * *", async () => {
   let records = read(RECORDS);
   const today = new Date().toISOString().split("T")[0];
@@ -154,8 +140,6 @@ cron.schedule("0 8 * * *", async () => {
         });
 
         r.reminded = true;
-        console.log("SMS sent:", r.phone);
-
       } catch (err) {
         console.log(err.message);
       }
@@ -164,3 +148,7 @@ cron.schedule("0 8 * * *", async () => {
 
   write(RECORDS, records);
 });
+
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () => console.log("running"));
