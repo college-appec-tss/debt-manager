@@ -18,6 +18,10 @@ document.addEventListener("DOMContentLoaded", () => {
 function addRecord() {
   const name = document.getElementById("name").value;
   const amount = document.getElementById("amount").value;
+  const data = {
+   dueDate: document.getElementById("dueDate").value,
+   phone: document.getElementById("phone").value
+};
 
   fetch(API + "/add-record", {
     method: "POST",
