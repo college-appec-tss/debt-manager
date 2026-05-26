@@ -1,3 +1,9 @@
+const twilio = require("twilio");
+
+const client = twilio(
+  process.env.TWILIO_SID,
+  process.env.TWILIO_AUTH
+);
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
