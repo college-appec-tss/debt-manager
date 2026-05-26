@@ -1,47 +1,153 @@
 <!DOCTYPE html>
-<html>
-<body>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login | Debt Manager Pro</title>
 
-<h2>Register</h2>
-<input id="ruser" placeholder="username">
-<input id="rpass" type="password" placeholder="password">
-<button onclick="register()">Register</button>
-
-<h2>Login</h2>
-<input id="luser" placeholder="username">
-<input id="lpass" type="password" placeholder="password">
-<button onclick="login()">Login</button>
-
-<script>
-const API = window.location.origin;
-
-function register() {
-  fetch(API + "/register", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      username: ruser.value,
-      password: rpass.value
-    })
-  })
-  .then(r => r.text())
-  .then(alert);
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,sans-serif;
 }
 
-function login() {
-  fetch(API + "/login", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      username: luser.value,
-      password: lpass.value
+body{
+  background:#F8FAFC;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.card{
+  background:white;
+  width:380px;
+  padding:35px;
+  border-radius:14px;
+  box-shadow:0 6px 20px rgba(0,0,0,.08);
+}
+
+h1{
+  text-align:center;
+  color:#1E3A8A;
+  margin-bottom:10px;
+}
+
+p{
+  text-align:center;
+  color:#6B7280;
+  margin-bottom:25px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  margin:10px 0;
+  border:1px solid #ddd;
+  border-radius:8px;
+  font-size:16px;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border:none;
+  border-radius:8px;
+  background:#1E3A8A;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  transition:.3s;
+}
+
+button:hover{
+  background:#16307a;
+}
+
+.secondary{
+  background:#10B981;
+}
+
+.secondary:hover{
+  background:#059669;
+}
+
+#msg{
+  margin-top:15px;
+  text-align:center;
+  color:#dc2626;
+  font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Debt Manager Pro</h1>
+  <p>Login or create your account</p>
+
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+
+  <button onclick="login()">Login</button>
+  <button class="secondary" onclick="register()">Register</button>
+
+  <div id="msg"></div>
+</div>
+
+<script>
+async function register(){
+  const username =
+    document.getElementById("username").value;
+
+  const password =
+    document.getElementById("password").value;
+
+  const res = await fetch("/register",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      username,
+      password
     })
-  })
-  .then(r => r.json())
-  .then(d => {
-    localStorage.setItem("token", d.token);
-    location.href = "/";
   });
+
+  const msg = await res.text();
+  document.getElementById("msg").innerText = msg;
+}
+
+async function login(){
+  const username =
+    document.getElementById("username").value;
+
+  const password =
+    document.getElementById("password").value;
+
+  const res = await fetch("/login",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      username,
+      password
+    })
+  });
+
+  const data = await res.json();
+
+  if(data.token){
+    localStorage.setItem("token", data.token);
+    location.href="/";
+  }else{
+    document.getElementById("msg").innerText =
+      "Login failed";
+  }
 }
 </script>
 
