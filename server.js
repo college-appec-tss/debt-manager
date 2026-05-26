@@ -140,3 +140,27 @@ app.listen(PORT, () =>
   console.log("running")
 );
 const cron = require("node-cron");
+cron.schedule("0 8 * * *", async () => {
+  let records = read(RECORDS);
+  const today = new Date().toISOString().split("T")[0];
+
+  for (let r of records) {
+    if (r.dueDate <= today && !r.reminded) {
+      try {
+        await client.messages.create({
+          body: `Reminder: Your payment "${r.name}" is overdue.`,
+          from: process.env.TWILIO_PHONE,
+          to: r.phone
+        });
+
+        r.reminded = true;
+        console.log("SMS sent:", r.phone);
+
+      } catch (err) {
+        console.log(err.message);
+      }
+    }
+  }
+
+  write(RECORDS, records);
+});
